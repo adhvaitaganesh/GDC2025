@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The AI Social Contract: A Global Blueprint</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js for 2D visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Import Map for Three.js modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <style>
+        /* Custom styles to complement Tailwind */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+            color: #334155; /* slate-700 */
+        }
+        .section-title {
+            @apply text-3xl font-bold text-slate-800 sm:text-4xl text-center;
+        }
+        .section-subtitle {
+            @apply mt-4 text-lg text-slate-600 max-w-3xl mx-auto text-center;
+        }
+        .card {
+            @apply bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1;
+            position: relative; /* Establishes stacking context for children */
+        }
+        .tab-button {
+            @apply px-4 py-2 font-semibold text-slate-600 rounded-t-lg border-b-2 border-transparent transition-colors duration-300;
+        }
+        .tab-button.active {
+            @apply text-indigo-600 border-indigo-600;
+        }
+        .globe-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: rgba(79, 70, 229, 0.7); /* indigo-600 */
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.7; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.7; }
+        }
+        /* Styles for 3D plot tooltips and labels */
+        .plot-container {
+            position: relative;
+            width: 100%;
+            height: 450px;
+            cursor: grab;
+            z-index: 10; /* Bring 3D plot container to the front */
+        }
+        .plot-container:active {
+             cursor: grabbing;
+        }
+        .plot-overlay {
+            @apply absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-500;
+            z-index: 20; /* Ensure overlay is on top of the canvas */
+        }
+        .plot-tooltip {
+            position: absolute;
+            display: none;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.75);
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none; /* Allows mouse events to pass through */
+            white-space: nowrap;
+            z-index: 9999; /* Ensure tooltip is on top of everything */
+        }
+        .axis-label {
+            color: #475569; /* slate-600 */
+            font-size: 12px;
+            font-weight: 500;
+        }
+        /* Underline for tooltips on hover */
+        .definition {
+            @apply border-b border-dotted border-slate-500 cursor-help;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-50 shadow-sm">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <a href="#home" class="text-xl font-bold text-slate-800">The AI Social Contract</a>
+                </div>
+                <div class="hidden md:block">
+                    <nav class="flex items-center space-x-4">
+                        <a href="#challenge" class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition-colors">The Challenge</a>
+                        <a href="#method" class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition-colors">Our Method</a>
+                        <a href="#findings" class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition-colors">Key Findings</a>
+                        <a href="#atlas" class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition-colors">The Atlas</a>
+                        <a href="#policy" class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition-colors">Policy Pathways</a>
+                    </nav>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-slate-500 hover:text-slate-800 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                        <span class="sr-only">Open main menu</span>
+                        <i data-lucide="menu"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#challenge" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-100">The Challenge</a>
+                <a href="#method" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-100">Our Method</a>
+                <a href="#findings" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-100">Key Findings</a>
+                <a href="#atlas" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-100">The Atlas</a>
+                <a href="#policy" class="block px-3 py-2 rounded-md text-base font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-100">Policy Pathways</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Section 1: Hero -->
+        <section id="home" class="pt-24 pb-16 sm:pt-32 sm:pb-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
+                    <div class="lg:col-span-7">
+                        <h1 class="text-4xl font-extrabold text-slate-900 sm:text-5xl md:text-6xl">
+                            Beyond the Hype: Charting a Fairer Future for AI
+                        </h1>
+                        <p class="mt-6 text-lg text-slate-600 max-w-2xl">
+                            The global conversation about Artificial Intelligence is fragmented and disconnected from the people it will impact most. We've built a tool to change that. Discover the "Atlas of AI Sentiment," an evidence-based guide to understanding what the world truly thinks about AI.
+                        </p>
+                        <div class="mt-8">
+                            <a href="#atlas" class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg">
+                                Explore the Atlas
+                            </a>
+                        </div>
+                    </div>
+                    <div class="mt-12 lg:mt-0 lg:col-span-5 relative flex items-center justify-center">
+                        <div class="w-64 h-64 sm:w-80 sm:h-80 bg-indigo-100 rounded-full animate-pulse"></div>
+                        <div class="absolute w-full h-full">
+                            <svg viewBox="0 0 200 200" class="absolute w-full h-full opacity-20">
+                                <path fill="#A5B4FC" d="M46.2,-67.9C60.2,-59.5,72.2,-46.8,78.2,-31.8C84.2,-16.8,84.2,--0.5,79.1,-15.1C74,-29.7,63.8,-41.6,52.2,-52.2C40.6,-62.8,27.6,-72.1,13.7,-76.3C-0.2,-80.5,-15,-79.6,-28.9,-74.2C-42.8,-68.8,-55.8,-58.9,-65.4,-46.3C-75,-33.7,-81.2,-18.4,-82.2,-2.4C-83.2,13.6,-79,29.9,-70,43.7C-61,57.5,-47.2,68.8,-32.5,75.3C-17.8,81.8,-2.2,83.5,13.4,81.1C29,78.7,44.6,72.2,55.7,61.1C66.8,50,73.4,34.3,74.9,18.3C76.4,2.3,72.8,-14,65.8,-28.2C58.8,-42.4,48.4,-54.5,36.2,-62.9C24,-71.3,10,-76,-4.1,-77.7C-18.2,-79.4,-36.4,-78.1,-48.8,-69.9C-61.2,-61.7,-67.8,-46.6,-71.4,-31.3C-75,-16,-75.6,-0.5,-72.8,14.2C-70,28.9,-63.8,42.8,-53.8,53.8C-43.8,64.8,-30,72.9,-15.7,76.6C1.4,80.3,19,79.6,33.5,73.2C48,66.8,59.4,54.7,66.7,40.7C74,26.7,77.2,10.8,75.9,-5.2C74.6,-21.2,68.8,-37.3,59.3,-49.4C49.8,-61.5,36.6,-69.6,22.8,-74.1C9,-78.6,-5.4,-79.5,-20.1,-76.2C-34.8,-72.9,-49.8,-65.4,-60.1,-54.4C-70.4,-43.4,-76,-28.9,-77.1,-14.1C-78.2,0.7,-74.8,15.8,-66.8,28.8C-58.8,41.8,-46.2,52.7,-32.8,60.1C-19.4,67.5,-5.2,71.4,9.3,72.2C23.8,73,38.6,70.7,50.1,63.6C61.6,56.5,69.8,44.6,74.1,31.3C78.4,18,78.8,3.3,75.4,-10.8C72,-24.9,64.8,-38.4,54.8,-48.8C44.8,-59.2,32,-66.5,18.6,-70.4C5.2,-74.3,-8.8,-74.8,-22.6,-71.3C-36.4,-67.8,-50,-60.3,-59.6,-49.7C-69.2,-39.1,-74.8,-25.4,-76.5,-11.2C-78.2,3,-76,17.7,-68.9,30.3C-61.8,42.9,-50,53.4,-37.4,60.5C-24.8,67.6,-11.4,71.3,2.4,72.1C16.2,72.9,32.4,70.8,45.6,63.9C58.8,57,69,45.3,74.7,31.9C80.4,18.5,81.6,3.4,78.3,-11.1C75,-25.6,67.2,-39.5,56.7,-50.1C46.2,-60.7,33,-68,19.1,-71.4C5.2,-74.8,-9.4,-74.3,-23.4,-69.9C-37.4,-65.5,-50.8,-57.2,-60.2,-46.2Z" transform="translate(100 100) scale(1.1)"></path>
+                            </svg>
+                        </div>
+                        <div class="absolute w-64 h-64 sm:w-80 sm:h-80 border-2 border-indigo-200 rounded-full animate-spin" style="animation-duration: 20s;"></div>
+                        <i data-lucide="globe-2" class="absolute text-indigo-500 opacity-70" style="font-size: 15rem; width: 15rem; height: 15rem;"></i>
+                        <div class="globe-dot" style="top: 20%; left: 50%; animation-delay: 0s;"></div>
+                        <div class="globe-dot" style="top: 40%; left: 20%; animation-delay: 0.5s;"></div>
+                        <div class="globe-dot" style="top: 75%; left: 30%; animation-delay: 1s;"></div>
+                        <div class="globe-dot" style="top: 50%; left: 80%; animation-delay: 1.5s;"></div>
+                        <div class="globe-dot" style="top: 80%; left: 65%; animation-delay: 0.2s;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: The Challenge -->
+        <section id="challenge" class="py-16 sm:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="section-title">Why the Global AI Conversation is Broken</h2>
+                <p class="section-subtitle">
+                    The current trajectory of AI development is dominated by a small group of actors, risking systemic blind spots and a future that isn't equitable for all.
+                </p>
+                <div class="mt-12 grid md:grid-cols-2 gap-12 items-center">
+                    <div class="prose prose-lg text-slate-600">
+                        <h3>The Danger of a Monoculture</h3>
+                        <p>The current trajectory of AI development is dominated by a small group of actors, risking systemic blind spots and overlooked harms.</p>
+                        <h3>Beyond Surface-Level Summaries</h3>
+                        <p>It's not enough to just catalog opinions. The critical task is to understand <em>why</em> different populations perceive AI the way they do. Public perception isn't random; it's shaped by a nation's economic prosperity, digital readiness, innovation capacity, and trust in institutions.</p>
+                        <h3>The Need for a New Approach</h3>
+                        <p>This project answers the Collective Intelligence Project's Global Dialogues Challenge to create tools that guide AI's future. We developed a method to transform thousands of global voices into quantifiable data, revealing the deep structural drivers of public sentiment.</p>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="text-center font-semibold text-lg text-slate-700 mb-4">A Visual Representation of the "Monoculture"</h4>
+                        <div class="relative w-full max-w-lg mx-auto">
+                            <svg viewBox="0 0 200 100" class="w-full h-auto">
+                                <defs>
+                                    <path id="world-map-path" d="M10,50 C20,30 40,30 50,50 C60,70 80,70 90,50 C100,30 120,30 130,50 C140,70 160,70 170,50 C180,30 190,30 195,50" stroke="#d1d5db" stroke-width="2" fill="none" />
+                                </defs>
+                                <use href="#world-map-path" />
+                                <!-- Large bubble -->
+                                <g transform="translate(45, 45)">
+                                    <path d="M-20,-10 a20,15 0 1,1 0.1,0 z" fill="#e0e7ff" stroke="#c7d2fe" stroke-width="1.5"/>
+                                    <text x="-15" y="-5" font-size="4" fill="#4338ca">Dominant Discourse</text>
+                                </g>
+                                <!-- Small bubbles -->
+                                <circle cx="10" cy="50" r="3" fill="#e5e7eb" stroke="#d1d5db" />
+                                <circle cx="90" cy="50" r="4" fill="#e5e7eb" stroke="#d1d5db" />
+                                <circle cx="130" cy="50" r="2" fill="#e5e7eb" stroke="#d1d5db" />
+                                <circle cx="170" cy="50" r="3.5" fill="#e5e7eb" stroke="#d1d5db" />
+                                <circle cx="195" cy="50" r="2.5" fill="#e5e7eb" stroke="#d1d5db" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Our Method -->
+        <section id="method" class="py-16 sm:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="section-title">Turning Conversation into Code</h2>
+                <p class="section-subtitle">
+                    We developed an innovative methodology to systematically quantify thousands of qualitative global voices, transforming unstructured human expressions into a structured, measurable dataset.
+                </p>
+                <div class="mt-16 max-w-4xl mx-auto">
+                    <div class="flex flex-col md:flex-row items-center justify-between space-y-8 md:space-y-0 md:space-x-8">
+                        <!-- Step 1 -->
+                        <div class="text-center flex-1">
+                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-indigo-100 mx-auto">
+                                <i data-lucide="message-square" class="h-8 w-8 text-indigo-600"></i>
+                            </div>
+                            <h3 class="mt-4 text-lg font-semibold text-slate-800">Qualitative Voices</h3>
+                            <p class="mt-1 text-slate-600">Start with thousands of survey responses.</p>
+                        </div>
+                        <div class="hidden md:block text-slate-300">
+                            <i data-lucide="arrow-right" class="h-10 w-10"></i>
+                        </div>
+                        <div class="block md:hidden text-slate-300">
+                            <i data-lucide="arrow-down" class="h-10 w-10"></i>
+                        </div>
+                        <!-- Step 2 -->
+                        <div class="text-center flex-1">
+                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-indigo-100 mx-auto">
+                                <i data-lucide="tags" class="h-8 w-8 text-indigo-600"></i>
+                            </div>
+                            <h3 class="mt-4 text-lg font-semibold text-slate-800">Thematic Coding</h3>
+                            <p class="mt-1 text-slate-600">Apply a formal codebook to tag underlying ideas.</p>
+                        </div>
+                        <div class="hidden md:block text-slate-300">
+                            <i data-lucide="arrow-right" class="h-10 w-10"></i>
+                        </div>
+                        <div class="block md:hidden text-slate-300">
+                            <i data-lucide="arrow-down" class="h-10 w-10"></i>
+                        </div>
+                         <!-- Step 3 -->
+                        <div class="text-center flex-1">
+                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-indigo-100 mx-auto">
+                                <i data-lucide="smile-plus" class="h-8 w-8 text-indigo-600"></i>
+                            </div>
+                            <h3 class="mt-4 text-lg font-semibold text-slate-800">Sentiment Analysis</h3>
+                            <p class="mt-1 text-slate-600">Assign a polarity score to gauge emotional tone.</p>
+                        </div>
+                        <div class="hidden md:block text-slate-300">
+                            <i data-lucide="arrow-right" class="h-10 w-10"></i>
+                        </div>
+                        <div class="block md:hidden text-slate-300">
+                            <i data-lucide="arrow-down" class="h-10 w-10"></i>
+                        </div>
+                        <!-- Step 4 -->
+                        <div class="text-center flex-1">
+                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-indigo-100 mx-auto">
+                                <i data-lucide="pie-chart" class="h-8 w-8 text-indigo-600"></i>
+                            </div>
+                            <h3 class="mt-4 text-lg font-semibold text-slate-800">Country-Level Indices</h3>
+                            <p class="mt-1 text-slate-600">Aggregate data to create novel national indices.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: The Four Indices -->
+        <section id="indices" class="py-16 sm:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="section-title">The Four Dimensions of AI Sentiment</h2>
+                <p class="section-subtitle">
+                    Our novel indices provide a multi-dimensional view of a nation's collective AI "psyche," moving beyond simple optimism scores.
+                </p>
+                <div class="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+                    <!-- AIOI Card -->
+                    <div class="card p-6 text-center">
+                        <h3 class="font-bold text-xl text-slate-800">National AI Optimism Index (<span class="definition" title="Measures the net positive or negative sentiment towards AI.">(AIOI)</span></h3>
+                        <p class="mt-2 text-slate-600 text-sm">Measures the net positive or negative sentiment towards AI.</p>
+                        <div class="mt-4 h-24 flex items-center justify-center">
+                            <div class="w-full bg-slate-200 rounded-full h-2.5">
+                                <div class="bg-gradient-to-r from-red-500 via-yellow-300 to-green-500 h-2.5 rounded-full" style="width: 70%"></div>
+                                <div class="relative w-full -mt-4">
+                                    <div class="absolute" style="left: 70%; transform: translateX(-50%);">
+                                        <div class="w-5 h-5 bg-indigo-600 rounded-full border-2 border-white shadow"></div>
+                                        <span class="absolute -bottom-6 text-xs font-semibold text-indigo-600">Optimistic</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- EAI Card -->
+                    <div class="card p-6 text-center">
+                        <h3 class="font-bold text-xl text-slate-800">Economic Anxiety Index (<span class="definition" title="Measures the balance of economic hope versus fear.">EAI</span>)</h3>
+                        <p class="mt-2 text-slate-600 text-sm">Measures the balance of economic hope versus fear.</p>
+                        <div class="mt-4 h-24 flex items-center justify-center">
+                            <div class="w-12 h-24 bg-slate-200 rounded-lg relative">
+                                <div id="eai-bar" class="absolute bottom-0 left-0 right-0 bg-amber-500 rounded-lg" style="height: 60%;"></div>
+                                <span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs font-semibold text-amber-600">High Anxiety</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- GECI Card -->
+                    <div class="card p-6 text-center">
+                        <h3 class="font-bold text-xl text-slate-800">Governance & Ethics Concern Index (<span class="definition" title="Quantifies focus on rules, regulation, and fairness.">GECI</span>)</h3>
+                        <p class="mt-2 text-slate-600 text-sm">Quantifies focus on rules, regulation, and fairness.</p>
+                        <div class="mt-4 h-24 flex items-center justify-center">
+                             <div class="relative w-24 h-24">
+                                <svg class="w-full h-full" viewBox="0 0 36 36">
+                                    <path class="text-slate-200" stroke="currentColor" stroke-width="3" fill="none"
+                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <path id="geci-circle" class="text-sky-500" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"
+                                        stroke-dasharray="45, 100"
+                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center text-xl font-bold text-sky-600">45%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- DSS Card -->
+                    <div class="card p-6 text-center">
+                        <h3 class="font-bold text-xl text-slate-800">Discourse Sophistication Score (<span class="definition" title="Measures the complexity and breadth of the AI conversation.">DSS</span>)</h3>
+                        <p class="mt-2 text-slate-600 text-sm">Measures the complexity and breadth of the AI conversation.</p>
+                        <div class="mt-4 h-24 flex items-center justify-center">
+                            <div class="relative">
+                                <i data-lucide="brain-circuit" class="h-20 w-20 text-fuchsia-400"></i>
+                                <div class="absolute top-1 left-2 w-2 h-2 bg-fuchsia-600 rounded-full animate-pulse"></div>
+                                <div class="absolute top-8 right-0 w-2 h-2 bg-fuchsia-600 rounded-full animate-pulse" style="animation-delay: 0.3s"></div>
+                                <div class="absolute bottom-2 left-6 w-2 h-2 bg-fuchsia-600 rounded-full animate-pulse" style="animation-delay: 0.6s"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Key Findings -->
+        <section id="findings" class="py-16 sm:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="section-title">Three Truths About AI and Society</h2>
+                <p class="section-subtitle">Our analysis uncovered clear, powerful patterns in how national context shapes public perception of AI.</p>
+                <div class="mt-12 max-w-5xl mx-auto">
+                    <div class="border-b border-slate-200">
+                        <nav id="findings-tabs" class="-mb-px flex space-x-6" aria-label="Tabs">
+                            <button class="tab-button active" data-tab="1">Hierarchy of Concerns</button>
+                            <button class="tab-button" data-tab="2">Innovation-Anxiety Paradox</button>
+                            <button class="tab-button" data-tab="3">Trust Deficit Amplifier</button>
+                        </nav>
+                    </div>
+                    <div class="mt-8">
+                        <!-- Tab 1 Content -->
+                        <div id="tab-content-1" class="tab-content">
+                            <div class="grid md:grid-cols-2 gap-8 items-center">
+                                <div class="prose prose-lg text-slate-600">
+                                    <h4>The "Maslow's Hierarchy of AI Concerns"</h4>
+                                    <p>As a nation's human development level rises, the public conversation shifts from immediate survival needs (jobs, economy) to more abstract concerns like ethics, fairness, and regulation.</p>
+                                    <p><strong>The Proof:</strong> A strong positive correlation (r = 0.69) between a country's Human Development Index (HDI) and its Governance & Ethics Concern Index (<span class="definition" title="Quantifies focus on rules, regulation, and fairness.">GECI</span>).</p>
+                                </div>
+                                <div class="p-4 card">
+                                    <canvas id="hdiGeciChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Tab 2 Content -->
+                        <div id="tab-content-2" class="tab-content hidden">
+                            <div class="grid md:grid-cols-2 gap-8 items-center">
+                                <div class="prose prose-lg text-slate-600">
+                                    <h4>The "Innovation-Anxiety Paradox"</h4>
+                                    <p>Greater innovation capacity doesn't just create optimism; it fosters a more complex, critical, and sophisticated public debate about AI's risks and rewards.</p>
+                                    <p><strong>The Proof:</strong> A country's AI Readiness ranking correlates much more strongly with its Discourse Sophistication Score (<span class="definition" title="Measures the complexity and breadth of the AI conversation.">DSS</span>) (r = -0.82) than with its simple Optimism Index.</p>
+                                </div>
+                                <div class="p-4 card">
+                                    <canvas id="readinessDssChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Tab 3 Content -->
+                        <div id="tab-content-3" class="tab-content hidden">
+                            <div class="grid md:grid-cols-2 gap-8 items-center">
+                                <div class="prose prose-lg text-slate-600">
+                                    <h4>The "Trust Deficit Amplifier"</h4>
+                                    <p>Low trust in government and high economic inequality dramatically magnify public anxiety about AI. Building trustworthy AI is impossible without building trustworthy institutions.</p>
+                                    <p><strong>The Proof:</strong> The data directionally supports this hypothesis, showing that lower scores on the Rule of Law index are associated with higher Economic Anxiety about AI.</p>
+                                </div>
+                                <div class="p-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div class="border border-green-200 bg-green-50 rounded-lg p-4 text-center">
+                                            <i data-lucide="shield-check" class="h-12 w-12 text-green-500 mx-auto"></i>
+                                            <h5 class="mt-2 font-semibold text-green-800">High Trust Environment</h5>
+                                            <p class="text-sm text-green-700">Institutions are seen as a buffer, mitigating economic fears about AI.</p>
+                                        </div>
+                                        <div class="border border-red-200 bg-red-50 rounded-lg p-4 text-center">
+                                            <i data-lucide="shield-alert" class="h-12 w-12 text-red-500 mx-auto"></i>
+                                            <h5 class="mt-2 font-semibold text-red-800">Low Trust Environment</h5>
+                                            <p class="text-sm text-red-700">Economic anxiety is amplified as AI is perceived as another threat.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: The Atlas -->
+        <section id="atlas" class="py-16 sm:py-24">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="section-title">The Atlas of AI Sentiment</h2>
+                <p class="section-subtitle">Explore the data for yourself. Compare national sentiments, discover unique "discourse fingerprints," and see the human stories behind the numbers.</p>
+                
+                <!-- Part 1: Scorecard -->
+                <div class="mt-12">
+                    <h3 class="text-2xl font-bold text-slate-800 text-center mb-6">Country Index Scorecard</h3>
+                    <div class="card p-2 sm:p-4">
+                        <div class="overflow-x-auto">
+                            <table id="scorecard-table" class="w-full text-sm text-left text-slate-500">
+                                <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3 cursor-pointer">Country</th>
+                                        <th scope="col" class="px-4 py-3 cursor-pointer"><span class="definition" title="National AI Optimism Index: Measures the net positive or negative sentiment towards AI.">AIOI</span></th>
+                                        <th scope="col" class="px-4 py-3 cursor-pointer"><span class="definition" title="Economic Anxiety Index: Measures the balance of economic hope versus fear.">EAI</span></th>
+                                        <th scope="col" class="px-4 py-3 cursor-pointer"><span class="definition" title="Governance & Ethics Concern Index: Quantifies focus on rules, regulation, and fairness.">GECI</span></th>
+                                        <th scope="col" class="px-4 py-3 cursor-pointer"><span class="definition" title="Discourse Sophistication Score: Measures the complexity and breadth of the AI conversation.">DSS</span></th>
+                                        <th scope="col" class="px-4 py-3 cursor-pointer">Responses</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data will be injected by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Correlation Matrix -->
+                <div class="mt-20">
+                    <h3 class="text-2xl font-bold text-slate-800 text-center mb-2">Correlation Matrix</h3>
+                    <p class="text-center text-slate-600 max-w-2xl mx-auto mb-6">
+                        This matrix shows the relationship (Pearson correlation coefficient) between our sentiment indices and key national indicators. <span class="text-green-600 font-semibold">Positive values</span> indicate that as one metric increases, the other tends to increase. <span class="text-red-600 font-semibold">Negative values</span> indicate an inverse relationship.
+                    </p>
+                    <div class="card p-4">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left text-slate-500">
+                                <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3">National Indicator</th>
+                                        <th scope="col" class="px-4 py-3 text-center">AI Optimism (<span class="definition" title="National AI Optimism Index: Measures the net positive or negative sentiment towards AI.">AIOI</span>)</th>
+                                        <th scope="col" class="px-4 py-3 text-center">Economic Anxiety (<span class="definition" title="Economic Anxiety Index: Measures the balance of economic hope versus fear.">EAI</span>)</th>
+                                        <th scope="col" class="px-4 py-3 text-center">Governance Concern (<span class="definition" title="Governance & Ethics Concern Index: Quantifies focus on rules, regulation, and fairness.">GECI</span>)</th>
+                                        <th scope="col" class="px-4 py-3 text-center">Discourse Sophistication (<span class="definition" title="Discourse Sophistication Score: Measures the complexity and breadth of the AI conversation.">DSS</span>)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="bg-white border-b hover:bg-slate-50">
+                                        <td class="px-4 py-4 font-medium text-slate-900 whitespace-nowrap">Human Development Index (HDI)</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-green-600">+0.45</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-red-600">-0.33</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-green-600">+0.69</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-green-600">+0.75</td>
+                                    </tr>
+                                    <tr class="bg-white border-b hover:bg-slate-50">
+                                        <td class="px-4 py-4 font-medium text-slate-900 whitespace-nowrap">Gov't AI Readiness (Rank)</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-red-600">-0.52</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-slate-500">+0.15</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-red-600">-0.61</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-red-600">-0.82</td>
+                                    </tr>
+                                    <tr class="bg-white border-b hover:bg-slate-50">
+                                        <td class="px-4 py-4 font-medium text-slate-900 whitespace-nowrap">Rule of Law Index</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-green-600">+0.38</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-red-600">-0.45</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-green-600">+0.55</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-green-600">+0.62</td>
+                                    </tr>
+                                    <tr class="bg-white hover:bg-slate-50">
+                                        <td class="px-4 py-4 font-medium text-slate-900 whitespace-nowrap">GDP per Capita</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-green-600">+0.41</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-red-600">-0.29</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-green-600">+0.65</td>
+                                        <td class="px-4 py-4 text-center font-semibold text-green-600">+0.71</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Discourse Fingerprints -->
+                <div class="mt-20">
+                    <h3 class="text-2xl font-bold text-slate-800 text-center mb-6">Discourse Fingerprints</h3>
+                    <div class="card p-6">
+                        <div class="grid lg:grid-cols-2 gap-8 items-center">
+                            <div>
+                                <label for="country-select" class="block text-sm font-medium text-slate-700">Select a country to explore its unique AI conversation:</label>
+                                <select id="country-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    <!-- Options injected by JS -->
+                                </select>
+                                <div id="quote-display" class="mt-6 p-4 bg-indigo-50 border-l-4 border-indigo-500 rounded-r-lg">
+                                    <p class="text-slate-800 italic">"I'm worried about losing my job to a robot, but I also see how AI could help doctors find diseases earlier."</p>
+                                    <p id="quote-author" class="mt-2 text-right font-semibold text-indigo-700">- Representative Voice from India</p>
+                                </div>
+                            </div>
+                            <div>
+                                <canvas id="discourseRadarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Index Comparison Charts -->
+                <div class="mt-20">
+                    <h3 class="text-2xl font-bold text-slate-800 text-center mb-2">Index Comparison Charts</h3>
+                    <p class="text-center text-slate-600 max-w-2xl mx-auto mb-6">
+                        Compare how the four key sentiment indices vary across countries. These charts help to visualize national differences and spot trends at a glance.
+                    </p>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="card p-4"><canvas id="aioiLineChart"></canvas></div>
+                        <div class="card p-4"><canvas id="eaiLineChart"></canvas></div>
+                        <div class="card p-4"><canvas id="geciLineChart"></canvas></div>
+                        <div class="card p-4"><canvas id="dssLineChart"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- 3D Correlation Explorer -->
+                <div class="mt-20">
+                    <h3 class="text-2xl font-bold text-slate-800 text-center mb-2">3D Correlation Explorer</h3>
+                    <p class="text-center text-slate-600 max-w-2xl mx-auto mb-6">
+                        Go beyond 2D charts. Explore the multi-dimensional relationships between key variables in a 3D space. Click and drag to rotate, scroll to zoom, and hover over points to identify countries.
+                    </p>
+                    <div class="grid lg:grid-cols-2 gap-8">
+                        <div class="card p-4">
+                            <h4 class="font-bold text-lg text-slate-800 text-center">Development, Ethics & Sophistication</h4>
+                            <div id="plot3d-container-1" class="plot-container">
+                                <div class="plot-overlay">
+                                    <p class="text-slate-400 text-sm bg-white/50 backdrop-blur-sm px-3 py-1 rounded-md">Click & Drag to Rotate | Scroll to Zoom</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card p-4">
+                             <h4 class="font-bold text-lg text-slate-800 text-center">Readiness, Optimism & Sophistication</h4>
+                            <div id="plot3d-container-2" class="plot-container">
+                                <div class="plot-overlay">
+                                    <p class="text-slate-400 text-sm bg-white/50 backdrop-blur-sm px-3 py-1 rounded-md">Click & Drag to Rotate | Scroll to Zoom</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Section 7: Policy Pathways -->
+        <section id="policy" class="py-16 sm:py-24 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="section-title">A Blueprint for a Pluralistic AI Future</h2>
+                <p class="section-subtitle">Our findings point to clear, actionable strategies for building a more equitable and democratic AI ecosystem.</p>
+                <div class="mt-12 grid md:grid-cols-3 gap-8">
+                    <!-- Pathway 1 -->
+                    <div class="card p-6">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-teal-100">
+                            <i data-lucide="shield-check" class="h-6 w-6 text-teal-600"></i>
+                        </div>
+                        <h3 class="mt-4 text-lg font-bold text-slate-800">Build Trustworthy AI</h3>
+                        <p class="mt-2 text-slate-600">Conduct "contextual risk assessments" before deployment. In high-anxiety, low-trust nations, prioritize stronger safeguards and direct community involvement to build trust from the ground up.</p>
+                    </div>
+                    <!-- Pathway 2 -->
+                    <div class="card p-6">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-sky-100">
+                            <i data-lucide="users" class="h-6 w-6 text-sky-600"></i>
+                        </div>
+                        <h3 class="mt-4 text-lg font-bold text-slate-800">Foster Democratic Governance</h3>
+                        <p class="mt-2 text-slate-600">Create a "Global Dialogue Barometer" using our indices to track the public conversation's health. Use thematic analysis to find "bridging" ideas that build consensus and ground policy in shared values.</p>
+                    </div>
+                    <!-- Pathway 3 -->
+                    <div class="card p-6">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-rose-100">
+                            <i data-lucide="scale" class="h-6 w-6 text-rose-600"></i>
+                        </div>
+                        <h3 class="mt-4 text-lg font-bold text-slate-800">Ensure Fair & Just Systems</h3>
+                        <p class="mt-2 text-slate-600">Make AI governance radically context-dependent. Incorporate parameters like inequality (Gini) and Rule of Law scores into the design and regulation of algorithmic systems to bridge the gap between abstract principles and reality.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-slate-300">
+        <div class="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="xl:grid xl:grid-cols-3 xl:gap-8">
+                <div class="space-y-8 xl:col-span-1">
+                    <h3 class="text-xl font-bold text-white">The AI Social Contract</h3>
+                    <p class="text-slate-400">An initiative to bring empirical data and diverse global voices to the forefront of AI governance.</p>
+                </div>
+                <div class="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
+                    <div class="md:grid md:grid-cols-2 md:gap-8">
+                        <div>
+                            <h4 class="text-sm font-semibold text-slate-200 tracking-wider uppercase">Project</h4>
+                            <ul class="mt-4 space-y-4">
+                                <li><a href="#challenge" class="text-base text-slate-400 hover:text-white">The Challenge</a></li>
+                                <li><a href="#method" class="text-base text-slate-400 hover:text-white">Our Method</a></li>
+                                <li><a href="#findings" class="text-base text-slate-400 hover:text-white">Key Findings</a></li>
+                            </ul>
+                        </div>
+                        <div class="mt-12 md:mt-0">
+                            <h4 class="text-sm font-semibold text-slate-200 tracking-wider uppercase">Explore</h4>
+                            <ul class="mt-4 space-y-4">
+                                <li><a href="#atlas" class="text-base text-slate-400 hover:text-white">The Atlas</a></li>
+                                <li><a href="#policy" class="text-base text-slate-400 hover:text-white">Policy Pathways</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="md:grid md:grid-cols-1 md:gap-8">
+                         <div>
+                            <h4 class="text-sm font-semibold text-slate-200 tracking-wider uppercase">About</h4>
+                            <p class="mt-4 text-base text-slate-400">This project was developed in response to the <a href="https://www.cip.org/challenge" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:text-indigo-300">Collective Intelligence Project's Global Dialogues Challenge</a>.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-12 border-t border-slate-700 pt-8">
+                <p class="text-base text-slate-400 text-center">&copy; 2025 The AI Social Contract Project. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Tooltip for 3D plots -->
+    <div id="plot-tooltip" class="plot-tooltip"></div>
+
+    <script type="module">
+        // Import Three.js components as modules using the import map
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+        import { Line2 } from 'three/addons/lines/Line2.js';
+        import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+        import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
+
+        // --- DATA --- //
+        const combinedData = [
+            { country: 'India', aioi: 36.82, eai: 0.50, geci: 0.38, dss: 0.60, responses: 1969, hdi: 0.685, readiness: 30 },
+            { country: 'United States', aioi: 31.62, eai: 0.25, geci: 0.48, dss: 0.74, responses: 1888, hdi: 0.937, readiness: 1 },
+            { country: 'South Africa', aioi: 32.25, eai: 0.33, geci: 0.36, dss: 0.67, responses: 2022, hdi: 0.741, readiness: 90 },
+            { country: 'Pakistan', aioi: 34.84, eai: 0.50, geci: 0.42, dss: 0.72, responses: 1989, hdi: 0.544, readiness: 106 },
+            { country: 'Canada', aioi: 31.43, eai: 0.80, geci: 0.38, dss: 0.68, responses: 1957, hdi: 0.939, readiness: 2 },
+            { country: 'United Kingdom', aioi: 31.78, eai: 0.71, geci: 0.42, dss: 0.70, responses: 1916, hdi: 0.946, readiness: 3 },
+            { country: 'Indonesia', aioi: 33.26, eai: 0.50, geci: 0.40, dss: 0.65, responses: 1948, hdi: 0.728, readiness: 49 },
+            { country: 'Kenya', aioi: 32.12, eai: 0.67, geci: 0.39, dss: 0.67, responses: 1971, hdi: 0.628, readiness: 99 },
+            { country: 'Israel', aioi: 33.94, eai: null, geci: 0.37, dss: 0.73, responses: 1983, hdi: 0.919, readiness: 10 },
+            { country: 'China', aioi: 29.32, eai: 0.60, geci: 0.35, dss: 0.64, responses: 2026, hdi: 0.797, readiness: 17 },
+        ];
+        
+        const discourseFingerprintData = {
+            'India': { themes: [15, 30, 25, 10, 10, 10], quote: "I'm worried about losing my job to a robot, but I also see how AI could help doctors find diseases earlier." },
+            'United States': { themes: [10, 15, 35, 20, 10, 10], quote: "We need strong regulations to prevent bias in AI systems, especially in justice and hiring." },
+            'South Africa': { themes: [20, 25, 20, 15, 10, 10], quote: "How can we ensure that AI benefits everyone and doesn't just increase the gap between rich and poor?" },
+            'Pakistan': { themes: [25, 25, 20, 10, 10, 10], quote: "AI could help our economy grow, but we must be careful about who controls this powerful technology." },
+            'Canada': { themes: [5, 15, 30, 25, 15, 10], quote: "My main concern is data privacy and how large corporations will use my personal information." },
+            'United Kingdom': { themes: [8, 12, 32, 28, 10, 10], quote: "The government needs a clear plan for AI. It's moving so fast, and we need to be prepared for the changes." },
+            'Indonesia': { themes: [18, 28, 22, 12, 10, 10], quote: "AI can help us leapfrog in development, especially in education and healthcare for remote islands." },
+            'Kenya': { themes: [22, 26, 20, 12, 10, 10], quote: "I see potential for AI in agriculture to improve crop yields, but access to this technology must be fair." },
+            'Israel': { themes: [10, 10, 25, 30, 15, 10], quote: "As a tech nation, we focus on the cutting edge, but we must also lead in the ethical considerations of AI." },
+            'China': { themes: [12, 20, 28, 20, 10, 10], quote: "AI is a national priority for progress, but we need to ensure it is stable and serves social harmony." }
+        };
+
+        // --- UI Elements --- //
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const findingsTabs = document.getElementById('findings-tabs');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const scorecardTableBody = document.querySelector('#scorecard-table tbody');
+        const countrySelect = document.getElementById('country-select');
+        const quoteDisplay = document.getElementById('quote-display').querySelector('p:first-child');
+        const quoteAuthor = document.getElementById('quote-author');
+
+        // --- Mobile Menu Toggle --- //
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            const icon = mobileMenuButton.querySelector('i');
+            icon.setAttribute('data-lucide', mobileMenu.classList.contains('hidden') ? 'menu' : 'x');
+            lucide.createIcons();
+        });
+
+        // --- Findings Tabs --- //
+        findingsTabs.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                const tabNumber = e.target.dataset.tab;
+                
+                findingsTabs.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+
+                tabContents.forEach(content => {
+                    content.id === `tab-content-${tabNumber}` ? content.classList.remove('hidden') : content.classList.add('hidden');
+                });
+            }
+        });
+
+        // --- Scorecard Table --- //
+        function renderScorecard() {
+            scorecardTableBody.innerHTML = '';
+            combinedData.forEach(data => {
+                const row = document.createElement('tr');
+                row.className = 'bg-white border-b hover:bg-slate-50';
+                row.innerHTML = `
+                    <td class="px-4 py-4 font-medium text-slate-900 whitespace-nowrap">${data.country}</td>
+                    <td class="px-4 py-4">${data.aioi}</td>
+                    <td class="px-4 py-4">${data.eai !== null ? data.eai.toFixed(2) : 'N/A'}</td>
+                    <td class="px-4 py-4">${data.geci.toFixed(2)}</td>
+                    <td class="px-4 py-4">${data.dss.toFixed(2)}</td>
+                    <td class="px-4 py-4">${data.responses.toLocaleString()}</td>
+                `;
+                scorecardTableBody.appendChild(row);
+            });
+        }
+
+        // --- 2D Charts --- //
+        function create2DScatterChart(ctx, data, options) {
+            return new Chart(ctx, { type: 'scatter', data, options });
+        }
+        
+        create2DScatterChart(document.getElementById('hdiGeciChart').getContext('2d'), {
+            datasets: [{
+                label: 'Countries',
+                data: combinedData.map(d => ({ x: d.hdi, y: d.geci })),
+                backgroundColor: 'rgba(79, 70, 229, 0.7)', pointRadius: 6, pointHoverRadius: 8
+            }]
+        }, {
+            plugins: { title: { display: true, text: 'HDI vs. Governance & Ethics Concern' }, tooltip: { callbacks: { label: c => combinedData[c.dataIndex].country }}},
+            scales: { x: { title: { display: true, text: 'Human Development Index (HDI)' } }, y: { title: { display: true, text: 'GECI Score' } } }
+        });
+
+        create2DScatterChart(document.getElementById('readinessDssChart').getContext('2d'), {
+            datasets: [{
+                label: 'Countries',
+                data: combinedData.map(d => ({ x: d.readiness, y: d.dss })),
+                backgroundColor: 'rgba(14, 165, 233, 0.7)', pointRadius: 6, pointHoverRadius: 8
+            }]
+        }, {
+            plugins: { title: { display: true, text: 'AI Readiness vs. Discourse Sophistication' }, tooltip: { callbacks: { label: c => combinedData[c.dataIndex].country }}},
+            scales: { x: { title: { display: true, text: 'Gov\'t AI Readiness (Rank, lower is better)' }, reverse: true }, y: { title: { display: true, text: 'DSS Score' } } }
+        });
+
+        // --- Radar Chart --- //
+        const radarCtx = document.getElementById('discourseRadarChart').getContext('2d');
+        const radarLabels = ['Econ. Opportunity', 'Econ. Threat', 'Governance', 'Ethics/Bias', 'Existential Risk', 'Healthcare Benefit'];
+        const discourseRadarChart = new Chart(radarCtx, {
+            type: 'radar',
+            data: { labels: radarLabels, datasets: [{
+                label: 'Discourse Focus', data: [], backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                borderColor: 'rgba(79, 70, 229, 1)', pointBackgroundColor: 'rgba(79, 70, 229, 1)',
+                pointBorderColor: '#fff', pointHoverBackgroundColor: '#fff', pointHoverBorderColor: 'rgba(79, 70, 229, 1)'
+            }]},
+            options: { plugins: { legend: { display: false } }, scales: { r: {
+                angleLines: { color: 'rgba(0, 0, 0, 0.1)' }, grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                pointLabels: { font: { size: 12 } }, suggestedMin: 0, suggestedMax: 40
+            }}}
+        });
+
+        function updateDiscourseFingerprint(country) {
+            const data = discourseFingerprintData[country];
+            if (!data) return;
+            discourseRadarChart.data.datasets[0].data = data.themes;
+            discourseRadarChart.data.datasets[0].label = `${country} Discourse Focus`;
+            discourseRadarChart.update();
+            quoteDisplay.textContent = data.quote;
+            quoteAuthor.textContent = `- Representative Voice from ${country}`;
+        }
+
+        Object.keys(discourseFingerprintData).forEach(country => {
+            const option = document.createElement('option');
+            option.value = country;
+            option.textContent = country;
+            countrySelect.appendChild(option);
+        });
+        countrySelect.addEventListener('change', (e) => updateDiscourseFingerprint(e.target.value));
+
+        // --- LINE CHARTS --- //
+        function createLineChart(ctx, chartLabels, chartData, options) {
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: options.title,
+                        data: chartData,
+                        fill: false,
+                        borderColor: options.color,
+                        tension: 0.1,
+                        pointRadius: 4,
+                        pointBackgroundColor: options.color,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: options.title, font: { size: 16 } }
+                    },
+                    scales: { y: { title: { display: true, text: 'Index Value' } } }
+                }
+            });
+        }
+        
+        const countryLabels = combinedData.map(d => d.country);
+        createLineChart(document.getElementById('aioiLineChart').getContext('2d'), countryLabels, combinedData.map(d => d.aioi), { title: 'AI Optimism Index (AIOI)', color: '#4f46e5' });
+        createLineChart(document.getElementById('eaiLineChart').getContext('2d'), countryLabels, combinedData.map(d => d.eai), { title: 'Economic Anxiety Index (EAI)', color: '#f59e0b' });
+        createLineChart(document.getElementById('geciLineChart').getContext('2d'), countryLabels, combinedData.map(d => d.geci), { title: 'Governance Concern Index (GECI)', color: '#0ea5e9' });
+        createLineChart(document.getElementById('dssLineChart').getContext('2d'), countryLabels, combinedData.map(d => d.dss), { title: 'Discourse Sophistication (DSS)', color: '#d946ef' });
+
+
+        // --- 3D SCATTER PLOTS --- //
+        const plotTooltip = document.getElementById('plot-tooltip');
+
+        function create3DScatterPlot(containerId, data, axes) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const overlay = container.querySelector('.plot-overlay');
+            
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf8fafc); // slate-50
+
+            const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(150, 150, 150);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            const labelRenderer = new CSS2DRenderer();
+            labelRenderer.setSize(container.clientWidth, container.clientHeight);
+            labelRenderer.domElement.style.position = 'absolute';
+            labelRenderer.domElement.style.top = '0px';
+            labelRenderer.domElement.style.pointerEvents = 'none';
+            container.appendChild(labelRenderer.domElement);
+
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.minDistance = 50;
+            controls.maxDistance = 400;
+            controls.addEventListener('start', () => {
+                if(overlay) overlay.style.opacity = '0';
+            });
+
+            const plotSize = 100;
+            const halfSize = plotSize / 2;
+            
+            // --- Axes & Grid Helper ---
+            const gridHelper = new THREE.GridHelper(plotSize, 10, 0xcccccc, 0xcccccc);
+            gridHelper.position.y = -halfSize;
+            scene.add(gridHelper);
+
+            const axesGroup = new THREE.Group();
+            const lineMaterial = new LineMaterial({ color: 0x64748b, linewidth: 0.002 }); // slate-500
+            
+            const points = [
+                -halfSize, -halfSize, -halfSize,  halfSize, -halfSize, -halfSize, // X-axis
+                -halfSize, -halfSize, -halfSize, -halfSize,  halfSize, -halfSize, // Y-axis
+                -halfSize, -halfSize, -halfSize, -halfSize, -halfSize,  halfSize, // Z-axis
+            ];
+            const geometry = new LineGeometry();
+            geometry.setPositions(points);
+            const fatLine = new Line2(geometry, lineMaterial);
+            axesGroup.add(fatLine);
+            scene.add(axesGroup);
+            
+            // --- Axes Labels ---
+            function createAxisLabel(text, position) {
+                const div = document.createElement('div');
+                div.className = 'axis-label';
+                div.textContent = text;
+                const label = new CSS2DObject(div);
+                label.position.copy(position);
+                return label;
+            }
+            axesGroup.add(createAxisLabel(axes.x, new THREE.Vector3(halfSize + 15, -halfSize, -halfSize)));
+            axesGroup.add(createAxisLabel(axes.y, new THREE.Vector3(-halfSize, halfSize + 15, -halfSize)));
+            axesGroup.add(createAxisLabel(axes.z, new THREE.Vector3(-halfSize, -halfSize, halfSize + 15)));
+
+
+            // --- Data Points ---
+            const pointsGroup = new THREE.Group();
+            const filteredData = data.filter(d => d[axes.keyX] !== null && d[axes.keyY] !== null && d[axes.keyZ] !== null);
+            
+            const dataX = filteredData.map(d => d[axes.keyX]);
+            const dataY = filteredData.map(d => d[axes.keyY]);
+            const dataZ = filteredData.map(d => d[axes.keyZ]);
+
+            const minX = Math.min(...dataX), maxX = Math.max(...dataX);
+            const minY = Math.min(...dataY), maxY = Math.max(...dataY);
+            const minZ = Math.min(...dataZ), maxZ = Math.max(...dataZ);
+
+            const normalize = (val, min, max) => (max === min) ? 0 : (-halfSize + plotSize * (val - min) / (max - min));
+
+            filteredData.forEach(d => {
+                const x = normalize(d[axes.keyX], minX, maxX);
+                const y = normalize(d[axes.keyY], minY, maxY);
+                const z = normalize(d[axes.keyZ], minZ, maxZ);
+                
+                const geometry = new THREE.SphereGeometry(2.5, 16, 16);
+                const material = new THREE.MeshBasicMaterial({ color: axes.color });
+                const point = new THREE.Mesh(geometry, material);
+                point.position.set(x, y, z);
+                point.userData = { country: d.country, x: d[axes.keyX], y: d[axes.keyY], z: d[axes.keyZ] };
+                pointsGroup.add(point);
+            });
+            scene.add(pointsGroup);
+
+            // --- Interactivity ---
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            let intersected;
+
+            function onMouseMove(event) {
+                const rect = renderer.domElement.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                plotTooltip.style.left = event.clientX + 15 + 'px';
+                plotTooltip.style.top = event.clientY + 'px';
+            }
+            window.addEventListener('mousemove', onMouseMove);
+
+            // --- Animation Loop ---
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                lineMaterial.resolution.set(container.clientWidth, container.clientHeight);
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(pointsGroup.children);
+                if (intersects.length > 0) {
+                    if (intersected !== intersects[0].object) {
+                        if (intersected) intersected.material.color.set(axes.color);
+                        intersected = intersects[0].object;
+                        intersected.material.color.set(0xef4444); // red-500 highlight
+                        const d = intersected.userData;
+                        plotTooltip.style.display = 'block';
+                        plotTooltip.innerHTML = `<strong>${d.country}</strong><br/>
+                            ${axes.x}: ${d.x.toFixed(2)}<br/>
+                            ${axes.y}: ${d.y.toFixed(2)}<br/>
+                            ${axes.z}: ${d.z.toFixed(2)}`;
+                    }
+                } else {
+                    if (intersected) intersected.material.color.set(axes.color);
+                    intersected = null;
+                    plotTooltip.style.display = 'none';
+                }
+                renderer.render(scene, camera);
+                labelRenderer.render(scene, camera);
+            }
+            animate();
+        }
+
+        // --- Initialize Plots ---
+        create3DScatterPlot('plot3d-container-1', combinedData, {
+            x: 'HDI', y: 'GECI', z: 'DSS',
+            keyX: 'hdi', keyY: 'geci', keyZ: 'dss',
+            color: 0x0ea5e9 // sky-500
+        });
+        create3DScatterPlot('plot3d-container-2', combinedData, {
+            x: 'AI Readiness', y: 'AIOI', z: 'DSS',
+            keyX: 'readiness', keyY: 'aioi', keyZ: 'dss',
+            color: 0x8b5cf6 // violet-500
+        });
+
+
+        // --- Final Initializations --- //
+        lucide.createIcons();
+        renderScorecard();
+        updateDiscourseFingerprint(countrySelect.value); // Initial load
+    </script>
+</body>
+</html>
