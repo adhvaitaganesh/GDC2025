@@ -101,6 +101,19 @@
         .definition {
             @apply border-b border-dotted border-slate-500 cursor-help;
         }
+
+        /* Award announcement */
+        .award-banner { margin-bottom: 40px; padding: 24px 28px; border: 1px solid #e9d5a1; border-radius: 16px; background: linear-gradient(110deg, #fffbeb, #fffdf7 60%, #eef2ff); display: flex; align-items: center; gap: 20px; }
+        .award-icon { width: 52px; height: 52px; flex-shrink: 0; border-radius: 14px; background: #fef3c7; color: #a16207; display: flex; align-items: center; justify-content: center; }
+        .award-copy { flex: 1; }
+        .award-eyebrow { margin: 0 0 5px; font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: #854d0e; }
+        .award-heading { margin: 0; font-size: 23px; font-weight: 800; line-height: 1.3; color: #0f172a; }
+        .award-detail { margin: 6px 0 0; font-size: 14px; line-height: 1.6; color: #475569; }
+        .award-link { display: inline-flex; align-items: center; gap: 8px; padding: 12px 16px; background: #fff; border: 1px solid #e2d5b6; border-radius: 9px; font-size: 13px; font-weight: 600; color: #4338ca; text-decoration: none; white-space: nowrap; }
+        .award-link:hover { background: #eef2ff; border-color: #a5b4fc; }
+        .award-link:focus-visible { outline: 3px solid #6366f1; outline-offset: 4px; }
+        @media (max-width: 767px) { .award-banner { flex-wrap: wrap; padding: 20px; gap: 14px; margin-bottom: 32px; } .award-copy { flex-basis: calc(100% - 70px); } .award-heading { font-size: 20px; } .award-link { margin-left: 66px; white-space: normal; } }
+        @media (max-width: 380px) { .award-link { margin-left: 0; } }
     </style>
 </head>
 <body class="antialiased">
@@ -145,6 +158,19 @@
         <!-- Section 1: Hero -->
         <section id="home" class="pt-24 pb-16 sm:pt-32 sm:pb-24 bg-white">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- Official Global Dialogues Challenge recognition -->
+                <aside class="award-banner" aria-labelledby="award-heading">
+                    <div class="award-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8v5a4 4 0 0 1-8 0V3Z"/><path d="M8 5H5v2a4 4 0 0 0 4 4m7-6h3v2a4 4 0 0 1-4 4m-3 1v5m-4 3h8m-6-3h4v3"/></svg>
+                    </div>
+                    <div class="award-copy">
+                        <p class="award-eyebrow">Global Dialogues Challenge 2025</p>
+                        <h2 class="award-heading" id="award-heading">Winner of the Applicability Award</h2>
+                        <p class="award-detail">The Collective Intelligence Project recognized Ganesh Gopalkrishna Hegde for <strong>AI Social Contract and Atlas of AI Sentiment</strong>.</p>
+                    </div>
+                    <a class="award-link" href="https://www.cip.org/challenge#:~:text=APPLICABILITY%20WINNER" target="_blank" rel="noopener noreferrer">View official announcement <span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a>
+                </aside>
+
                 <div class="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
                     <div class="lg:col-span-7">
                         <h1 class="text-4xl font-extrabold text-slate-900 sm:text-5xl md:text-6xl">
